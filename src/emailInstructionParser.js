@@ -1,3 +1,30 @@
+function toNumber(value, fallback = 0) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  const cleaned = String(value || '')
+    .trim()
+    .replace(/[$,%\s]/g, '')
+    .replace(/,/g, '');
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function parseTaxRate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return 0;
+  }
+
+  if (raw.endsWith('%')) {
+    return toNumber(raw.slice(0, -1), 0) / 100;
+  }
+
+  const parsed = toNumber(raw, 0);
+  return parsed > 1 ? parsed / 100 : parsed;
+}
+
 function parseInstructions(raw = '') {
   const lines = raw
     .split(/\r?\n/)
@@ -15,8 +42,8 @@ function parseInstructions(raw = '') {
 
       data.items.push({
         description: descriptionPart || 'Service',
-        quantity: Number(quantityPart || 1),
-        unitPrice: Number(unitPricePart || 0)
+        quantity: toNumber(quantityPart, 1),
+        unitPrice: toNumber(unitPricePart, 0)
       });
       continue;
     }
@@ -52,7 +79,7 @@ function parseInstructions(raw = '') {
         data.clientEmail = value;
         break;
       case 'tax_rate':
-        data.taxRate = Number(value);
+        data.taxRate = parseTaxRate(value);
         break;
       case 'notes':
         data.notes = value;
@@ -66,5 +93,7 @@ function parseInstructions(raw = '') {
 }
 
 module.exports = {
-  parseInstructions
+  parseInstructions,
+  parseTaxRate,
+  toNumber
 };

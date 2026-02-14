@@ -49,10 +49,16 @@ fly deploy
 ## Deploy from GitHub to Fly.io
 
 1. Push this repo to GitHub.
-2. In Fly, create app once (or keep existing app name in `fly.toml`).
+2. Create the Fly app first (this prevents `Error: app not found`):
+   ```bash
+   fly apps create <your-fly-app>
+   ```
 3. In GitHub repo settings, add secret `FLY_API_TOKEN` (create via `fly tokens create deploy`).
-4. Ensure your default deploy branch is `main` (workflow triggers on push to `main`).
-5. Push to `main` or run the **Fly Deploy** workflow manually from Actions.
+4. In GitHub repo **Variables**, set `FLY_APP_NAME` to your Fly app name (for example `app-weathered-butterfly-8962`).
+5. Ensure your default deploy branch is `main` (workflow triggers on push to `main`).
+6. Push to `main` or run the **Fly Deploy** workflow manually from Actions.
+
+The workflow now validates `FLY_APP_NAME`, ensures the app exists, and rewrites a generated deploy config (`fly.generated.toml`) so the `app` value always matches your target app.
 
 After deploy, verify:
 
