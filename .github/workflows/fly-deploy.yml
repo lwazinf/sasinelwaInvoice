@@ -25,11 +25,23 @@ jobs:
             echo "Missing repository variable FLY_APP_NAME"
             exit 1
           fi
-          flyctl apps create "$FLY_APP" || true
+
+          if ! flyctl apps show "$FLY_APP" >/dev/null 2>&1; then
+            flyctl apps create "$FLY_APP"
+          fi
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
+      - name: Render deploy config for target app
+        run: |
+          cp fly.toml fly.generated.toml
+          if grep -q '^app = ' fly.generated.toml; then
+            sed -i "s/^app = .*/app = \"$FLY_APP\"/" fly.generated.toml
+          else
+            printf 'app = "%s"\n%s' "$FLY_APP" "$(cat fly.generated.toml)" > fly.generated.toml
+          fi
+
       - name: Deploy to Fly.io
-        run: flyctl deploy --remote-only --app "$FLY_APP" --config fly.toml
+        run: flyctl deploy --remote-only --app "$FLY_APP" --config fly.generated.toml
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

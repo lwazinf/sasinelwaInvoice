@@ -170,24 +170,20 @@ function formatCurrency(value, currency = 'USD') {
 }
 
 function normalizeInvoiceData(input = {}) {
-  const items = (input.items || []).map((item) => {
-    const quantity = Number(item.quantity || 0);
-    const unitPriceRaw = Number(item.unitPrice || 0);
-    const lineTotalRaw = quantity * unitPriceRaw;
+  const sourceItems = (input.items || []).map((item) => ({
+    description: item.description || 'Service',
+    quantity: Number(item.quantity || 0),
+    unitPrice: Number(item.unitPrice || 0)
+  }));
 
-    return {
-      description: item.description || 'Service',
-      quantity: quantity.toFixed(2),
-      unitPrice: formatCurrency(unitPriceRaw),
-      lineTotal: formatCurrency(lineTotalRaw)
-    };
-  });
+  const items = sourceItems.map((item) => ({
+    description: item.description,
+    quantity: item.quantity.toFixed(2),
+    unitPrice: formatCurrency(item.unitPrice),
+    lineTotal: formatCurrency(item.quantity * item.unitPrice)
+  }));
 
-  const subtotalRaw = items.reduce((sum, i, idx) => {
-    const source = input.items[idx] || {};
-    return sum + Number(source.quantity || 0) * Number(source.unitPrice || 0);
-  }, 0);
-
+  const subtotalRaw = sourceItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const taxRate = Number(input.taxRate || 0);
   const taxRaw = subtotalRaw * taxRate;
   const totalRaw = subtotalRaw + taxRaw;

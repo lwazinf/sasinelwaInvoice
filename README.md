@@ -58,6 +58,8 @@ fly deploy
 5. Ensure your default deploy branch is `main` (workflow triggers on push to `main`).
 6. Push to `main` or run the **Fly Deploy** workflow manually from Actions.
 
+The workflow now validates `FLY_APP_NAME`, ensures the app exists, and rewrites a generated deploy config (`fly.generated.toml`) so the `app` value always matches your target app.
+
 After deploy, verify:
 
 ```bash

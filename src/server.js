@@ -26,7 +26,13 @@ function parseRequestBody(rawBody, contentType = '') {
   }
 
   if (contentType.includes('application/json')) {
-    return JSON.parse(rawBody);
+    try {
+      return JSON.parse(rawBody);
+    } catch (_error) {
+      const err = new Error('Invalid JSON payload');
+      err.statusCode = 400;
+      throw err;
+    }
   }
 
   if (contentType.includes('application/x-www-form-urlencoded')) {
@@ -114,7 +120,7 @@ async function handler(req, res) {
       });
       res.end(pdfBuffer);
     } catch (error) {
-      sendJson(res, 500, { error: error.message });
+      sendJson(res, error.statusCode || 500, { error: error.message });
     }
     return;
   }
@@ -143,7 +149,7 @@ async function handler(req, res) {
 
       sendJson(res, 200, { ok: true });
     } catch (error) {
-      sendJson(res, 500, { error: error.message });
+      sendJson(res, error.statusCode || 500, { error: error.message });
     }
     return;
   }

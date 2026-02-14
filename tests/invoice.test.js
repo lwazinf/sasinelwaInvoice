@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { parseInstructions } = require('../src/emailInstructionParser');
+const { parseInstructions, parseTaxRate } = require('../src/emailInstructionParser');
 const { normalizeInvoiceData } = require('../src/invoiceTemplate');
 const { parseRequestBody } = require('../src/server');
 
@@ -19,6 +19,12 @@ test('parseInstructions extracts keys and items', () => {
   assert.equal(result.clientName, 'Acme Ops');
   assert.equal(result.items.length, 2);
   assert.equal(result.taxRate, 0.15);
+});
+
+test('parseTaxRate accepts percentage inputs', () => {
+  assert.equal(parseTaxRate('15%'), 0.15);
+  assert.equal(parseTaxRate('15'), 0.15);
+  assert.equal(parseTaxRate('0.2'), 0.2);
 });
 
 test('normalizeInvoiceData computes totals', () => {
@@ -39,4 +45,8 @@ test('parseRequestBody handles form payload', () => {
   const result = parseRequestBody('from=test%40a.com&subject=Hello', 'application/x-www-form-urlencoded');
   assert.equal(result.from, 'test@a.com');
   assert.equal(result.subject, 'Hello');
+});
+
+test('parseRequestBody throws 400 on malformed json', () => {
+  assert.throws(() => parseRequestBody('{"bad"', 'application/json'), (error) => error.statusCode === 400);
 });
